@@ -1,31 +1,101 @@
-import { router } from "expo-router";
-import { Image, StyleSheet, Text, View } from "react-native";
-import Botao from "../components/Botao";
+import { useState, useEffect } from 'react';
+import { View, Text, FlatList, ActivityIndicator, StyleSheet, Button } from 'react-native';
+import { useRouter } from 'expo-router';
+import axios from 'axios';
+import { MovieCard } from '../components/MovieCard';
 
-export default function TelaInicial() {
+// 1. Interface atualizada com os campos esperados por detalhes.tsx
+interface Movie {
+  id: string;
+  title: string;
+  year: string;
+  genre: string;
+  image: string;
+  synopsis: string;
+}
+
+export default function HomeScreen() {
+  const [movies, setMovies] = useState<Movie[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const router = useRouter();
+
+  useEffect(() => {
+    fetchMovies();
+  }, []);
+
+  async function fetchMovies() {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const response = await axios.get('https://api.sampleapis.com/movies/animation');
+      
+      // 2. Mapeamento com posterURL e sinopse padrão (ou vinda da API)
+      const formattedMovies: Movie[] = response.data.slice(0, 15).map((item: any) => ({
+        id: String(item.id),
+        title: item.title,
+        year: String(item.year || 'N/A'),
+        genre: item.genre || 'Animação',
+        image: item.posterURL || 'https://via.placeholder.com/180x260',
+        synopsis: item.synopsis || 'Sinopse não disponível para este filme no momento.',
+      }));
+
+      setMovies(formattedMovies);
+    } catch (err) {
+      setError('Falha ao carregar os filmes. Verifique sua conexão e tente novamente.');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  if (loading) {
+    return (
+      <View style={styles.center}>
+        <ActivityIndicator size="large" color="#007AFF" />
+        <Text style={styles.infoText}>Carregando catálogo de filmes...</Text>
+      </View>
+    );
+  }
+
+  if (error) {
+    return (
+      <View style={styles.center}>
+        <Text style={styles.errorText}>{error}</Text>
+        <Button title="Tentar Novamente" onPress={fetchMovies} color="#007AFF" />
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
-      <Image
-        source={{ uri: "https://picsum.photos/seed/cineapp/300/300" }}
-        style={styles.logo}
+      <FlatList
+        data={movies}
+        keyExtractor={(item) => item.id}
+        renderItem={({ item }) => (
+          <MovieCard
+            title={item.title}
+            year={item.year}
+            genre={item.genre}
+            // 3. Chamada configurada para passar todos os parâmetros ao detalhes.tsx
+            onPress={() =>
+              router.push({
+                pathname: '/detalhes',
+                params: {
+                  id: item.id,
+                  titulo: item.title,
+                  imagem: item.image,
+                  genero: item.genre,
+                  ano: item.year,
+                  sinopse: item.synopsis,
+                },
+              })
+            }
+          />
+        )}
+        contentContainerStyle={styles.listPadding}
       />
-      <Text style={styles.titulo}>CineApp</Text>
-      <Text style={styles.descricao}>
-        Sua plataforma para explorar os melhores filmes do cinema clássico e
-        moderno.
-      </Text>
-
-      <View style={styles.botoesContainer}>
-        <Botao
-          titulo="Acessar Catálogo"
-          onPress={() => router.push("/catalogo")}
-        />
-        <Botao
-          titulo="Sobre o Aplicativo"
-          variant="secondary"
-          onPress={() => router.push("/sobre")}
-        />
-      </View>
     </View>
   );
 }
@@ -33,31 +103,26 @@ export default function TelaInicial() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
+    backgroundColor: '#f5f5f5',
+  },
+  center: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
     padding: 24,
-    backgroundColor: "#121212",
   },
-  logo: {
-    width: 140,
-    height: 140,
-    borderRadius: 70,
-    marginBottom: 20,
-  },
-  titulo: {
-    fontSize: 32,
-    fontWeight: "bold",
-    color: "#FFFFFF",
-    marginBottom: 12,
-  },
-  descricao: {
+  infoText: {
+    marginTop: 12,
     fontSize: 16,
-    color: "#CCCCCC",
-    textAlign: "center",
-    marginBottom: 32,
-    lineHeight: 22,
+    color: '#666',
   },
-  botoesContainer: {
-    width: "100%",
+  errorText: {
+    fontSize: 16,
+    color: '#d9534f',
+    textAlign: 'center',
+    marginBottom: 16,
+  },
+  listPadding: {
+    paddingVertical: 12,
   },
 });

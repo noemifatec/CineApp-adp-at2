@@ -1,22 +1,16 @@
-import { Stack } from "expo-router";
+import { Stack } from 'expo-router';
 
 export default function Layout() {
   return (
     <Stack
       screenOptions={{
-        headerStyle: { backgroundColor: "#121212" },
-        headerTintColor: "#FFFFFF",
-        headerTitleStyle: { fontWeight: "bold" },
-        contentStyle: { backgroundColor: "#121212" },
+        headerStyle: { backgroundColor: '#007AFF' },
+        headerTintColor: '#fff',
+        headerTitleStyle: { fontWeight: 'bold' },
       }}
     >
-      <Stack.Screen
-        name="index"
-        options={{ title: "Início", headerShown: false }}
-      />
-      <Stack.Screen name="catalogo" options={{ title: "Catálogo de Filmes" }} />
-      <Stack.Screen name="detalhes" options={{ title: "Detalhes do Filme" }} />
-      <Stack.Screen name="sobre" options={{ title: "Sobre o App" }} />
+      <Stack.Screen name="index" options={{ title: 'Catálogo de Filmes' }} />
+      <Stack.Screen name="details/[id]" options={{ title: 'Detalhes do Filme' }} />
     </Stack>
   );
 }
